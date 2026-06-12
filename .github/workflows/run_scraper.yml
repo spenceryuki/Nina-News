@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write # Allows the bot to save feed.xml back to your repo
 
