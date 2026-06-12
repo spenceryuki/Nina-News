@@ -6,13 +6,21 @@ import cloudscraper
 def generate_rss():
     TARGET_URL = "https://www.ninanews.com/website"
     
-    # Bypass Cloudflare and fetch HTML
-    scraper = cloudscraper.create_scraper(delay=10)
+    # Create scraper with modern browser configurations
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        },
+        delay=10
+    )
+    
     response = scraper.get(TARGET_URL)
     
+    # CRASH EXPLICITLY IF BLOCKED: This will show us the real error on GitHub Actions
     if response.status_code != 200:
-        print(f"Failed to fetch page. Status code: {response.status_code}")
-        return
+        raise RuntimeError(f"Cloudflare blocked request. Status Code: {response.status_code}. Response snippet: {response.text[:500]}")
 
     soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -24,8 +32,7 @@ def generate_rss():
     fg.description('Automated feed bypassing security walls.')
     fg.language('en')
 
-    # Quick parsing logic (adjust selectors based on target HTML if needed)
-    # This looks for standard hyperlinks inside the page body
+    # Parse hyperlinks
     articles = soup.find_all('a') 
     
     seen_links = set()
@@ -48,8 +55,12 @@ def generate_rss():
         fe.link(href=link_url)
         
         count += 1
-        if count >= 20: # Limit to 20 items
+        if count >= 20: 
             break
+
+    # Ensure we actually have items before writing
+    if count == 0:
+        raise ValueError("Fetched page successfully, but failed to find any news links matching the criteria.")
 
     fg.rss_file('feed.xml')
     print("Successfully generated feed.xml")
