@@ -1,3 +1,3 @@
 beautifulsoup4
 feedgen
-cloudscraper
+curl_cffi
