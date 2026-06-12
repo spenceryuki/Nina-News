@@ -1,24 +1,15 @@
 import os
 from bs4 import BeautifulSoup
 from feedgen.feed import FeedGenerator
-import cloudscraper
+from curl_cffi import requests as cf_requests
 
 def generate_rss():
     TARGET_URL = "https://www.ninanews.com/website"
     
-    # Create scraper with modern browser configurations
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'desktop': True
-        },
-        delay=10
-    )
+    print("Fetching page using Chrome 124 browser impersonation...")
+    # Impersonate a real Chrome engine to slide past Cloudflare signatures
+    response = cf_requests.get(TARGET_URL, impersonate="chrome124", timeout=30)
     
-    response = scraper.get(TARGET_URL)
-    
-    # CRASH EXPLICITLY IF BLOCKED: This will show us the real error on GitHub Actions
     if response.status_code != 200:
         raise RuntimeError(f"Cloudflare blocked request. Status Code: {response.status_code}. Response snippet: {response.text[:500]}")
 
@@ -58,12 +49,11 @@ def generate_rss():
         if count >= 20: 
             break
 
-    # Ensure we actually have items before writing
     if count == 0:
-        raise ValueError("Fetched page successfully, but failed to find any news links matching the criteria.")
+        raise ValueError("Fetched page successfully, but failed to extract any qualifying news anchors from the source HTML.")
 
     fg.rss_file('feed.xml')
-    print("Successfully generated feed.xml")
+    print(f"Successfully generated feed.xml with {count} entries.")
 
 if __name__ == "__main__":
     generate_rss()
