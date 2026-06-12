@@ -29,8 +29,7 @@ jobs:
       run: python scraper.py
 
     - name: Commit and Push changes
-      run: |
-        git config --global user.name 'GitHub Actions Bot'
-        git config --global user.email 'actions@github.com'
-        git add feed.xml
-        git diff-index --quiet HEAD || (git commit -m "Automated feed update" && git push origin main)
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Automated feed update"
+        file_pattern: 'feed.xml'
